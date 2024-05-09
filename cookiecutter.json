@@ -14,7 +14,7 @@
   "use_docker": "y",
   "postgresql_version": "16",
   "cloud_provider": "Azure",
-  "mail_service":  "Amazon SES",
+  "mail_service":  "Sendgrid",
   "use_async": "y",
   "use_drf": "y",
   "frontend_pipeline": "None",

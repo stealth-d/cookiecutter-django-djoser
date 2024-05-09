@@ -13,7 +13,7 @@
   "editor": "VS Code",
   "use_docker": "y",
   "postgresql_version": "16",
-  "cloud_provider": "AWS",
+  "cloud_provider": "Azure",
   "mail_service":  "Amazon SES",
   "use_async": "y",
   "use_drf": "y",

@@ -75,3 +75,7 @@ REDIS_URL=redis://localhost:6379/0
 CELERY_FLOWER_USER=!!!SET CELERY_FLOWER_USER!!!
 CELERY_FLOWER_PASSWORD=!!!SET CELERY_FLOWER_PASSWORD!!!
 {% endif %}
+
+# Docker
+# ------------------------------------------------------------------------------
+USE_DOCKER=no

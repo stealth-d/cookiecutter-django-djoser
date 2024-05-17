@@ -3,8 +3,6 @@
 
 from pathlib import Path
 
-from datetime import timedelta
-
 import environ
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
@@ -12,7 +10,7 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 APPS_DIR = BASE_DIR / "apps"
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(BASE_DIR / ".env"))
@@ -68,12 +66,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "unfold",  # before django.contrib.admin
-    # "unfold.contrib.filters",  # optional, if special filters are needed
-    # "unfold.contrib.forms",  # optional, if special form elements are needed
-    # "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    # "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    # "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+    # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
     "django.forms",
 ]
@@ -84,42 +77,18 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
-    "djoser",
-    "mptt",
-    "imagekit",
-    "django_admin_listfilter_dropdown",
-    "django_admin_generator",
-    "django_countries",
-    "phonenumber_field",
-    "django_elasticsearch_dsl",
+    'djoser',
+     "django_elasticsearch_dsl",
     "django_elasticsearch_dsl_drf",
     "django_dramatiq",
 ]
 
 LOCAL_APPS = [
-    "apps.users.apps.UsersConfig",
-    "apps.shipping.apps.ShippingConfig",
-    "apps.orders.apps.OrdersConfig",
-    "apps.checkout.apps.CheckoutConfig",
-    "apps.common.apps.CommonConfig",
-    "apps.payments.apps.PaymentsConfig",
-    "apps.products.apps.ProductsConfig",
-    "apps.vendors.apps.VendorsConfig",
-    "apps.prices.apps.PricesConfig",
-    "apps.stocks.apps.StocksConfig",
-    "apps.buyers.apps.BuyersConfig",
-    # "apps.accounts.apps.AccountsConfig",
-    "apps.taxes.apps.TaxesConfig",
-    "apps.communication.apps.CommunicationConfig",
-    
+    "apps.users",
+    # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
-
-
-# LANGUAGES = [
-#     ("en", "English"),
-# ]
 
 # MIGRATIONS
 # ------------------------------------------------------------------------------
@@ -128,13 +97,10 @@ MIGRATION_MODULES = {"sites": "apps.contrib.sites.migrations"}
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
-
-
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "rest_framework.authentication.SessionAuthentication",
-    "rest_framework.authentication.TokenAuthentication",
+
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
@@ -176,8 +142,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Record db changes
-    # "simple_history.middleware.HistoryRequestMiddleware",
+   
 ]
 
 # STATIC
@@ -223,6 +188,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
+               
             ],
         },
     },
@@ -249,11 +215,12 @@ CSRF_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
 X_FRAME_OPTIONS = "DENY"
 
-# ~
+# EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+    "DJANGO_EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
@@ -263,10 +230,19 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = [("""SG""", "sg@duket.link")]
+ADMINS = [("""Duket Inc""", "admin@duket.co")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
-# https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
+
+# Permissions & authentication
+# ------------------------------------------------------------------------------
+DJOSER = {
+    "PASSWORD_RESET_CONFIRM_URL": "#/password/reset/confirm/{uid}/{token}",
+    "USERNAME_RESET_CONFIRM_URL": "#/username/reset/confirm/{uid}/{token}",
+    "ACTIVATION_URL": "#/activate/{uid}/{token}",
+    "SEND_ACTIVATION_EMAIL": True,
+    "USER_ID_FIELD": "email",
+}
 
 
 # LOGGING
@@ -274,15 +250,6 @@ MANAGERS = ADMINS
 # https://docs.djangoproject.com/en/dev/ref/settings/#logging
 # See https://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
-
-LOGS_DIR = BASE_DIR / "logs"
-
-
-# create logs directory if it does not exist
-if not LOGS_DIR.exists():
-    LOGS_DIR.mkdir()
-
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -297,16 +264,11 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        # file
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "filename": LOGS_DIR / "debug.log",
-            "formatter": "verbose",
-        },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
+
+
 
 
 # django-rest-framework
@@ -317,43 +279,53 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 15,
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/.*$"
+CORS_URLS_REGEX = r"^/api/.*$"
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Duket API",
-    "DESCRIPTION": "Documentation of API endpoints of Duket Commerce",
+    "TITLE": "duket API",
+    "DESCRIPTION": "Documentation of API endpoints of duket",
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SCHEMA_PATH_PREFIX": "/api/",
 }
 
-# Netweok
+
+# Search
 # ------------------------------------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+# ElasticSearch
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": "http://localhost:9200",
+        "http_auth": ("elastic", "Bgpg4q4Tdz3sJWh2LuKJ"),
+    }
+}
 
-# HTTP
-CSRF_TRUSTED_ORIGINS = [
-    "http://99.241.13.139:*",
-    "http://20.15.108.226:*",
-    "http://68.154.68.136:65081",
-    "http://localhost:8000",
-]
 
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = (
-    "http://localhost:8000",
-    "http://99.241.13.139:*",
-    "http://20.15.108.226:8000",
-    "http://68.154.68.136:65081",
-)
+ELASTICSEARCH_DSL_PARALLEL = True
+ELASTICSEARCH_DSL_INDEX_SETTINGS = {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+        "analyzer": {
+            "ngram_analyzer": {"tokenizer": "autocomplete", "filter": ["lowercase"]},
+        },
+        "tokenizer": {
+            "autocomplete": {
+                "type": "edge_ngram",
+                "min_gram": 1,
+                "max_gram": 50,
+                "token_chars": ["letter", "digit"],
+            },
+        },
+    },
+}
 
 # Tasks
 # ------------------------------------------------------------------------------
@@ -388,105 +360,18 @@ DRAMATIQ_RESULT_BACKEND = {
 }
 
 
-# Search
+# Netweok
 # ------------------------------------------------------------------------------
-# ElasticSearch
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": "http://localhost:9200",
-        "http_auth": ("elastic", "Bgpg4q4Tdz3sJWh2LuKJ"),
-    }
-}
+CORS_ALLOW_ALL_ORIGINS = True
 
+# HTTP
+CSRF_TRUSTED_ORIGINS = [
+    
+    "http://localhost:8000",
+]
 
-ELASTICSEARCH_DSL_PARALLEL = True
-ELASTICSEARCH_DSL_INDEX_SETTINGS = {
-    "number_of_shards": 1,
-    "number_of_replicas": 0,
-    "analysis": {
-        "analyzer": {
-            "ngram_analyzer": {"tokenizer": "autocomplete", "filter": ["lowercase"]},
-        },
-        "tokenizer": {
-            "autocomplete": {
-                "type": "edge_ngram",
-                "min_gram": 1,
-                "max_gram": 50,
-                "token_chars": ["letter", "digit"],
-            },
-        },
-    },
-}
-
-# Ecommerce
-# ------------------------------------------------------------------------------
-
-# Payments
-# Live
-STRIPE_LIVE_SECRET_KEY = env("STRIPE_PUBLIC_KEY")
-STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
-STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
-# Test keys
-STRIPE_PUBLIC_KEY = env("STRIPE_TEST_PUBLIC_KEY")
-STRIPE_TEST_SECRET_KEY = env("STRIPE_TEST_SECRET_KEY")
-STRIPE_TEST_WEBHOOK_SECRET = env("STRIPE_TEST_WEBHOOK_SECRET")
-
-
-DEFAULT_CURRENCY = "USD"
-EASYPOST_API_KEY = env("EASYPOST_TEST_API_KEY")
-CHECKOUT_COOKIE_LIFETIME = 60 * 60 * 24 * 7  # 1 week
-CHECKOUT_COOKIE_SECURE = False
-VENDOR_SCRAPED_JSON_PATH = "docs/vendors/shopify"
-
-# AI
-# ------------------------------------------------------------------------------
-SIMILARITY_CHECKPOINT_PATH = str(BASE_DIR / Path("checkpoints/similarity/main"))
-DETECTION_CHECKPOINT_PATH = str(BASE_DIR / Path("checkpoints/detection/main"))
-DETECTION_OUTPUT_DIR = "images/ai/detection/crops"
-
-# Crawlers
-FLASK_CRAWLER_URL = "http://localhost:5000/crawl_shopify"
-
-
-# Permissions & authentication
-# ------------------------------------------------------------------------------
-DJOSER = {
-    "PASSWORD_RESET_CONFIRM_URL": "#/password/reset/confirm/{uid}/{token}",
-    "USERNAME_RESET_CONFIRM_URL": "#/username/reset/confirm/{uid}/{token}",
-    "ACTIVATION_URL": "#/activate/{uid}/{token}",
-    "SEND_ACTIVATION_EMAIL": True,
-    "USER_ID_FIELD": "email",
-}
-
-
-# Payments
-# ------------------------------------------------------------------------------
-
-# Live
-STRIPE_LIVE_SECRET_KEY = env("STRIPE_PUBLIC_KEY")
-STRIPE_LIVE_SECRET_KEY = env("STRIPE_SECRET_KEY")
-STRIPE_LIVE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
-
-
-
-# Test keys
-STRIPE_PUBLIC_KEY = env("STRIPE_TEST_PUBLIC_KEY")
-STRIPE_TEST_SECRET_KEY = env("STRIPE_TEST_SECRET_KEY")
-STRIPE_TEST_WEBHOOK_SECRET = env("STRIPE_TEST_WEBHOOK_SECRET")
-
-DEFAULT_CURRENCY = "USD"
-EASYPOST_API_KEY = env("EASYPOST_TEST_API_KEY")
-CHECKOUT_COOKIE_LIFETIME = 60 * 60 * 24 * 7  # 1 week
-CHECKOUT_COOKIE_SECURE = False
-VENDOR_SCRAPED_JSON_PATH = "docs/vendors/shopify"
-
-STRIPE_SECRET_KEY = STRIPE_TEST_SECRET_KEY
-
-# AI
-# ------------------------------------------------------------------------------
-SIMILARITY_CHECKPOINT_PATH = str(BASE_DIR / Path("checkpoints/similarity/main"))
-DETECTION_CHECKPOINT_PATH = str(BASE_DIR / Path("checkpoints/detection/main"))
-DETECTION_OUTPUT_DIR = "images/ai/detection/crops"
-
-# Crawlers
-FLASK_CRAWLER_URL = "http://localhost:5000/crawl_shopify"
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = (
+    "http://localhost:8000",
+  
+)

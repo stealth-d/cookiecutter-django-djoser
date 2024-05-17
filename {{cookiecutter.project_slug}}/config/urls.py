@@ -16,6 +16,8 @@ from rest_framework.authtoken.views import obtain_auth_token
 {%- endif %}
 
 urlpatterns = [
+     path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path(
         "about/",

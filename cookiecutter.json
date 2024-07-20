@@ -10,7 +10,7 @@
   "username_type": "email",
   "timezone": "UTC",
   "windows": "n",
-  "editor": "VS Code",
+  "editor": "PyCharm",
   "use_docker": "y",
   "postgresql_version": "16",
   "cloud_provider": "Azure",
